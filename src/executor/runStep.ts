@@ -4,7 +4,7 @@ import { Step, Spec } from '../spec/schema';
 import { callClaude } from './claudeClient';
 import { logInfo } from '../utils/logger';
 
-const SYSTEM_PROMPT = `You are an expert software engineer. You will receive:
+const BASE_SYSTEM_PROMPT = `You are an expert software engineer. You will receive:
 1. A task description
 2. The contents of files you are allowed to modify
 3. Project constraints
@@ -20,6 +20,15 @@ Rules:
 - Only output files listed in "files_allowed"
 - Do not add explanations outside the file blocks
 - Preserve existing code that is not being changed`;
+
+function buildSystemPrompt(cwd: string): string {
+  const globalContextPath = path.join(cwd, '.tempo', 'global-context.md');
+  if (fs.existsSync(globalContextPath)) {
+    const globalContext = fs.readFileSync(globalContextPath, 'utf-8').trim();
+    return `${BASE_SYSTEM_PROMPT}\n\n---\n\n${globalContext}`;
+  }
+  return BASE_SYSTEM_PROMPT;
+}
 
 export interface StepResult {
   stepId: number;
@@ -98,7 +107,7 @@ ${extraContext ? `\nAdditional context:\n${extraContext}` : ''}
 `.trim();
 
   logInfo(`Sending step ${step.id} to Claude...`);
-  const claudeResponse = await callClaude(SYSTEM_PROMPT, instruction);
+  const claudeResponse = await callClaude(buildSystemPrompt(cwd), instruction);
 
   const parsedFiles = parseClaudeResponse(claudeResponse);
   const filesWritten = writeFiles(parsedFiles, cwd, step.files_allowed);

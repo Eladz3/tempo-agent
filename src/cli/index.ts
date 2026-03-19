@@ -44,33 +44,71 @@ function cmdInit(): void {
     );
   }
 
-  const rulesPath = path.join(tempoDir, 'rules.md');
-  if (!fs.existsSync(rulesPath)) {
+  const globalContextPath = path.join(tempoDir, 'global-context.md');
+  if (!fs.existsSync(globalContextPath)) {
     fs.writeFileSync(
-      rulesPath,
-      `# Tempo Rules
+      globalContextPath,
+      `# Global Context
+
+This file is injected into every Claude prompt. Use it to define project-wide
+design principles, code style rules, and safety constraints.
+
+---
 
 ## Code Style
-- Use TypeScript
-- Use async/await
-- Keep functions small and focused
 
-## Safety
-- Only modify files listed in files_allowed
-- Never delete files not explicitly listed
+<!-- Define your preferred language, formatting, and patterns. Examples: -->
+<!-- - Language: TypeScript (strict mode) -->
+<!-- - Use async/await, never raw Promise chains -->
+<!-- - Keep functions small and single-purpose -->
+<!-- - Prefer named exports over default exports -->
 
-## .gitignore suggestions
-Add these to your .gitignore:
-.tempo/sessions/
-.tempo/runs/
+
+## Architecture & Design Principles
+
+<!-- Describe how this project is structured and how it should stay that way. Examples: -->
+<!-- - Follow the repository pattern for all data access -->
+<!-- - Business logic lives in /src/services, never in route handlers -->
+<!-- - Avoid circular dependencies between modules -->
+
+
+## Safety & Constraints
+
+<!-- Rules Claude must always follow when modifying code. Examples: -->
+<!-- - Never modify files outside of files_allowed -->
+<!-- - Do not introduce new external dependencies without a comment explaining why -->
+<!-- - Never remove error handling or logging -->
+
+
+## Naming Conventions
+
+<!-- Consistent naming rules across the codebase. Examples: -->
+<!-- - Files: kebab-case -->
+<!-- - Classes: PascalCase -->
+<!-- - Functions and variables: camelCase -->
+<!-- - Constants: SCREAMING_SNAKE_CASE -->
+
+
+## Testing
+
+<!-- Expectations around test coverage and style. Examples: -->
+<!-- - Every new function must have at least one unit test -->
+<!-- - Use Vitest, not Jest -->
+<!-- - Mock external services, never the database -->
+
+
+## Additional Notes
+
+<!-- Anything else Claude should always keep in mind for this project. -->
+
 `,
       'utf-8'
     );
   }
 
   console.log(chalk.green('✓ Initialized .tempo/ directory'));
-  console.log(chalk.blue('  .tempo/config.json  — validation commands'));
-  console.log(chalk.blue('  .tempo/rules.md     — agent behavior rules'));
+  console.log(chalk.blue('  .tempo/config.json        — validation commands'));
+  console.log(chalk.blue('  .tempo/global-context.md  — project rules injected into every prompt'));
   console.log(chalk.blue('  .tempo/ideation/    — place your .md ideation files here'));
   console.log(chalk.blue('  .tempo/scores/      — compiled score JSONs'));
   console.log(chalk.blue('  .tempo/sessions/    — execution history per run'));

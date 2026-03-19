@@ -1,0 +1,31 @@
+{
+  "goal": "Build a REST API for a todo list app",
+  "constraints": [
+    "Use Express.js",
+    "Use TypeScript",
+    "Store data in memory"
+  ],
+  "steps": [
+    {
+      "id": 1,
+      "description": "Create Express server entry point",
+      "files_allowed": []
+    },
+    {
+      "id": 2,
+      "description": "Add todo routes (GET, POST, PUT, DELETE)",
+      "files_allowed": []
+    },
+    {
+      "id": 3,
+      "description": "Add in-memory store module",
+      "files_allowed": []
+    }
+  ],
+  "tests": [],
+  "definition_of_done": [
+    "Add authentication",
+    "Add pagination",
+    "Add filtering by status"
+  ]
+}

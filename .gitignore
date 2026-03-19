@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.tempo/sessions/
+.tempo/runs/
+.env
+*.tgz

@@ -1,0 +1,5 @@
+{
+  "testCommand": "npm test",
+  "buildCommand": "npm run build",
+  "lintCommand": "npm run lint"
+}

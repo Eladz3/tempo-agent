@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.agent/
 .tempo/sessions/
 .tempo/runs/
 .env

@@ -10,11 +10,23 @@ npm install -g tempo-agent
 
 ## Requirements
 
-Set your Anthropic API key:
+Set your Anthropic API key as an environment variable.
 
+**macOS / Linux**
 ```bash
 export ANTHROPIC_API_KEY=your-key-here
 ```
+
+**Windows (PowerShell)**
+```powershell
+# Current session only
+$env:ANTHROPIC_API_KEY = "your-key-here"
+
+# Permanently (no need to set it again after restart)
+[System.Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY", "your-key-here", "User")
+```
+
+Get your API key at [console.anthropic.com](https://console.anthropic.com) → API Keys.
 
 ## Usage
 
@@ -26,9 +38,9 @@ Run this inside any existing project:
 tempo init
 ```
 
-Creates a `.tempo/` directory with config and folders for scores, sessions, and ideation files.
+Creates a `.tempo/` directory with config and folders for Scores, Sessions, and Ideation files.
 
-### 2. Write an ideation file
+### 2. Write an Ideation file
 
 Create a markdown file in `.tempo/ideation/my-feature.md`:
 
@@ -51,7 +63,7 @@ Build a REST API for a todo list
 3. Add in-memory store module
 ```
 
-### 3. Compile it into a score
+### 3. Compile it into a Score
 
 ```bash
 tempo compile my-feature.md
@@ -59,9 +71,9 @@ tempo compile my-feature.md
 
 Generates `.tempo/scores/my-feature.json` — a structured execution plan.
 
-### 4. Edit the score
+### 4. Edit the Score
 
-Open `.tempo/scores/my-feature.json` and fill in `files_allowed` for each step — the list of files Claude is permitted to create or modify:
+Open `.tempo/scores/my-feature.json` and fill in `files_allowed` for each Step — the list of files Claude is permitted to create or modify:
 
 ```json
 {
@@ -82,11 +94,11 @@ tempo run my-feature
 ```
 
 Tempo will:
-- Send each step to Claude with the current file contents
+- Send each Step to Claude with the current file contents
 - Write Claude's response back to disk
 - Run lint, build, and tests
 - Retry up to 3 times on failure, feeding errors back to Claude
-- Save a full session log to `.tempo/sessions/`
+- Save a full Session log to `.tempo/sessions/`
 
 ## Config
 
@@ -110,7 +122,7 @@ Every run is saved to `.tempo/sessions/session-{timestamp}/`:
 |---|---|
 | `step-N.md` | Prompt sent, files used, Claude response, result |
 | `errors-step-N.md` | Validation errors and retry attempts |
-| `diff-N.patch` | Git diff after each step |
+| `diff-N.patch` | Git diff after each Step |
 
 Add to your `.gitignore`:
 
@@ -121,9 +133,9 @@ Add to your `.gitignore`:
 
 ## How it works
 
-1. Reads the files listed in `files_allowed` for the current step
-2. Sends them to Claude with the step instruction
+1. Reads the files listed in `files_allowed` for the current Step
+2. Sends them to Claude with the Step instruction
 3. Claude returns full file replacements
 4. Tempo writes them to disk
 5. Runs validation — if it fails, sends the errors back to Claude and retries
-6. Moves to the next step once validation passes
+6. Moves to the next Step once validation passes

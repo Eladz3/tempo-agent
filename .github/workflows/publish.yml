@@ -1,16 +1,34 @@
 name: Publish to npm
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type (leave as "auto" to detect from commits)'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - patch
+          - minor
+          - major
 
 permissions:
   id-token: write
+  contents: write
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-node@v4
         with:
@@ -18,6 +36,69 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Determine version bump type
+        id: bump_type
+        run: |
+          BUMP="${{ github.event.inputs.bump_type || 'auto' }}"
+
+          if [ "$BUMP" != "auto" ]; then
+            echo "type=$BUMP" >> $GITHUB_OUTPUT
+            echo "Bump type manually set to: $BUMP"
+            exit 0
+          fi
+
+          # Analyze commits since last tag (or all commits if no tag exists)
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"%s" HEAD)
+          else
+            COMMITS=$(git log --pretty=format:"%s" "$LAST_TAG"..HEAD)
+          fi
+
+          echo "Commits to analyze:"
+          echo "$COMMITS"
+
+          if echo "$COMMITS" | grep -qiE "(BREAKING CHANGE|^.+!:)"; then
+            echo "type=major" >> $GITHUB_OUTPUT
+            echo "Detected: MAJOR bump"
+          elif echo "$COMMITS" | grep -qiE "^feat(\(.+\))?:"; then
+            echo "type=minor" >> $GITHUB_OUTPUT
+            echo "Detected: MINOR bump"
+          elif echo "$COMMITS" | grep -qiE "^(fix|perf|refactor|chore|docs|style|test)(\(.+\))?:"; then
+            echo "type=patch" >> $GITHUB_OUTPUT
+            echo "Detected: PATCH bump"
+          else
+            echo "type=unknown" >> $GITHUB_OUTPUT
+            echo "Could not determine bump type from commits"
+          fi
+
+      - name: Fail if bump type unknown
+        if: steps.bump_type.outputs.type == 'unknown'
+        run: |
+          echo "::error::Could not determine version bump type from commit messages."
+          echo "::error::Commit messages should follow Conventional Commits (https://www.conventionalcommits.org):"
+          echo "::error::  MAJOR: any commit with 'BREAKING CHANGE' or a '!' suffix (e.g. feat!: ...)"
+          echo "::error::  MINOR: feat: ..."
+          echo "::error::  PATCH: fix:, chore:, docs:, refactor:, perf:, style:, test: ..."
+          echo "::error::Re-run this workflow manually and select a bump type to override."
+          exit 1
+
+      - name: Bump version
+        run: |
+          npm version ${{ steps.bump_type.outputs.type }} --no-git-tag-version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "Bumped to version $NEW_VERSION"
+          git add package.json package-lock.json
+          git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
+          git tag "v$NEW_VERSION"
+          git push
+          git push --tags
 
       - name: Publish
         run: npm publish --provenance --access public

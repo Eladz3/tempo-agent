@@ -5,3 +5,4 @@ dist/
 .tempo/runs/
 .env
 *.tgz
+.claude/

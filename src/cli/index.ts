@@ -52,7 +52,7 @@ function cmdInit(): void {
       globalContextPath,
       `# Global Context
 
-This file is injected into every Claude prompt. Use it to define project-wide
+This file is injected into every AI prompt. Use it to define project-wide
 design principles, code style rules, and safety constraints.
 
 ---
@@ -76,7 +76,7 @@ design principles, code style rules, and safety constraints.
 
 ## Safety & Constraints
 
-<!-- Rules Claude must always follow when modifying code. Examples: -->
+<!-- Rules the AI must always follow when modifying code. Examples: -->
 <!-- - Never modify files outside of files_allowed -->
 <!-- - Do not introduce new external dependencies without a comment explaining why -->
 <!-- - Never remove error handling or logging -->
@@ -101,7 +101,7 @@ design principles, code style rules, and safety constraints.
 
 ## Additional Notes
 
-<!-- Anything else Claude should always keep in mind for this project. -->
+<!-- Anything else the AI should always keep in mind for this project. -->
 
 `,
       'utf-8'

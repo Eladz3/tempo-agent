@@ -19,12 +19,12 @@ function saveStepHistory(
   stepId: number,
   instruction: string,
   filesAllowed: string[],
-  claudeResponse: string,
+  aiResponse: string,
   result: 'success' | 'failure'
 ): void {
   const content = `# Step ${stepId}
 
-## Instruction Sent to Claude
+## Instruction Sent to AI
 
 \`\`\`
 ${instruction}
@@ -34,10 +34,10 @@ ${instruction}
 
 ${filesAllowed.map((f) => `- ${f}`).join('\n')}
 
-## Claude Response
+## AI Response
 
 \`\`\`
-${claudeResponse}
+${aiResponse}
 \`\`\`
 
 ## Result
@@ -109,7 +109,7 @@ export async function runPipeline(spec: Spec, cwd: string): Promise<void> {
           step.id,
           stepResult.instruction,
           stepResult.filesAllowed,
-          stepResult.claudeResponse,
+          stepResult.aiResponse,
           'success'
         );
         succeeded = true;
@@ -127,7 +127,7 @@ export async function runPipeline(spec: Spec, cwd: string): Promise<void> {
           step.id,
           stepResult.instruction,
           stepResult.filesAllowed,
-          stepResult.claudeResponse,
+          stepResult.aiResponse,
           'failure'
         );
       }

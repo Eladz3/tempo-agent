@@ -96,10 +96,10 @@ tempo run my-feature
 ```
 
 Tempo will:
-- Send each Step to Claude with the current file contents
-- Write Claude's response back to disk
+- Send each Step to the AI with the current file contents
+- Write the AI's response back to disk
 - Run lint, build, and tests
-- Retry up to 3 times on failure, feeding errors back to Claude
+- Retry up to 3 times on failure, feeding errors back to the AI
 - Save a full Session log to `.tempo/sessions/`
 
 ## Config

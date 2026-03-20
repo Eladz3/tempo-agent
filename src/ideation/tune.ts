@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import chalk from 'chalk';
-import { callClaude } from '../executor/claudeClient';
+import { callAI } from '../executor/aiClient';
 
 const ROUGH_PREFIX_REGEX = /^\[(rough|r)\]/i;
 
@@ -56,9 +56,9 @@ export async function tuneIdeation(cwd: string): Promise<void> {
 
     let spec: string;
     try {
-      spec = await callClaude(SYSTEM_PROMPT, `Here is the rough feature blurb:\n\n${blurb}`);
+      spec = await callAI(SYSTEM_PROMPT, `Here is the rough feature blurb:\n\n${blurb}`);
     } catch (err) {
-      console.error(chalk.red(`  ✗ Claude call failed: ${(err as Error).message}`));
+      console.error(chalk.red(`  ✗ AI call failed: ${(err as Error).message}`));
       continue;
     }
 

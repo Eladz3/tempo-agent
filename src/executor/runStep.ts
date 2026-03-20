@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Step, Spec } from '../spec/schema';
-import { callClaude } from './claudeClient';
+import { callAI } from './aiClient';
 import { logInfo } from '../utils/logger';
 
 const BASE_SYSTEM_PROMPT = `You are an expert software engineer. You will receive:
@@ -34,7 +34,7 @@ export interface StepResult {
   stepId: number;
   instruction: string;
   filesAllowed: string[];
-  claudeResponse: string;
+  aiResponse: string;
   filesWritten: string[];
 }
 
@@ -51,7 +51,7 @@ function readAllowedFiles(filesAllowed: string[], cwd: string): Record<string, s
   return contents;
 }
 
-function parseClaudeResponse(response: string): Record<string, string> {
+function parseAIResponse(response: string): Record<string, string> {
   const files: Record<string, string> = {};
   const regex = /===FILE: (.+?)===\n([\s\S]*?)===END===/g;
   let match: RegExpExecArray | null;
@@ -106,17 +106,17 @@ ${fileSection}
 ${extraContext ? `\nAdditional context:\n${extraContext}` : ''}
 `.trim();
 
-  logInfo(`Sending step ${step.id} to Claude...`);
-  const claudeResponse = await callClaude(buildSystemPrompt(cwd), instruction);
+  logInfo(`Sending step ${step.id} to AI...`);
+  const aiResponse = await callAI(buildSystemPrompt(cwd), instruction);
 
-  const parsedFiles = parseClaudeResponse(claudeResponse);
+  const parsedFiles = parseAIResponse(aiResponse);
   const filesWritten = writeFiles(parsedFiles, cwd, step.files_allowed);
 
   return {
     stepId: step.id,
     instruction,
     filesAllowed: step.files_allowed,
-    claudeResponse,
+    aiResponse,
     filesWritten,
   };
 }

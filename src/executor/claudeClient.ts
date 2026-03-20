@@ -1,30 +1,25 @@
 import axios, { AxiosError } from 'axios';
 
-const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
-const DEFAULT_MODEL = 'claude-sonnet-4-6';
+const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 export async function callClaude(systemPrompt: string, userPrompt: string): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY environment variable is not set');
+    throw new Error('GEMINI_API_KEY environment variable is not set');
   }
 
   let response;
   try {
     response = await axios.post(
-      CLAUDE_API_URL,
+      `${GEMINI_API_URL}?key=${apiKey}`,
       {
-        model: DEFAULT_MODEL,
-        max_tokens: 8192,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+        generationConfig: { maxOutputTokens: 8192 },
       },
       {
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-        },
+        headers: { 'content-type': 'application/json' },
       }
     );
   } catch (err) {
@@ -36,9 +31,9 @@ export async function callClaude(systemPrompt: string, userPrompt: string): Prom
     throw err;
   }
 
-  const block = response.data.content?.[0];
-  if (!block || block.type !== 'text') {
-    throw new Error('Unexpected response format from Claude API');
+  const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (typeof text !== 'string') {
+    throw new Error('Unexpected response format from Gemini API');
   }
-  return block.text as string;
+  return text;
 }

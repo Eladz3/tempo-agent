@@ -1,6 +1,6 @@
 # Tempo [![npm version](https://img.shields.io/npm/v/tempo-agent.svg?style=flat-square)](https://www.npmjs.org/package/tempo-agent)
 
-AI-driven code generation CLI. Give Tempo a goal, and it writes, validates, and retries code changes step by step using Claude.
+AI-driven code generation CLI. Give Tempo a goal, and it writes, validates, and retries code changes step by step.
 
 ## Install
 
@@ -10,23 +10,25 @@ npm install -g tempo-agent
 
 ## Requirements
 
-Set your Anthropic API key as an environment variable.
+Tempo uses the **Gemini 2.0 Flash** model via the Google AI API (free tier available — no billing required).
+
+Set your Gemini API key as an environment variable.
 
 **macOS / Linux**
 ```bash
-export ANTHROPIC_API_KEY=your-key-here
+export GEMINI_API_KEY=your-key-here
 ```
 
 **Windows (PowerShell)**
 ```powershell
 # Current session only
-$env:ANTHROPIC_API_KEY = "your-key-here"
+$env:GEMINI_API_KEY = "your-key-here"
 
 # Permanently (no need to set it again after restart)
-[System.Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY", "your-key-here", "User")
+[System.Environment]::SetEnvironmentVariable("GEMINI_API_KEY", "your-key-here", "User")
 ```
 
-Get your API key at [console.anthropic.com](https://console.anthropic.com) → API Keys.
+Get your free API key at [aistudio.google.com](https://aistudio.google.com) → Get API Key.
 
 ## Usage
 
@@ -73,7 +75,7 @@ Generates `.tempo/scores/my-feature.json` — a structured execution plan.
 
 ### 4. Edit the Score
 
-Open `.tempo/scores/my-feature.json` and fill in `files_allowed` for each Step — the list of files Claude is permitted to create or modify:
+Open `.tempo/scores/my-feature.json` and fill in `files_allowed` for each Step — the list of files Tempo is permitted to create or modify:
 
 ```json
 {
@@ -120,7 +122,7 @@ Every run is saved to `.tempo/sessions/session-{timestamp}/`:
 
 | File | Contents |
 |---|---|
-| `step-N.md` | Prompt sent, files used, Claude response, result |
+| `step-N.md` | Prompt sent, files used, AI response, result |
 | `errors-step-N.md` | Validation errors and retry attempts |
 | `diff-N.patch` | Git diff after each Step |
 
@@ -134,8 +136,8 @@ Add to your `.gitignore`:
 ## How it works
 
 1. Reads the files listed in `files_allowed` for the current Step
-2. Sends them to Claude with the Step instruction
-3. Claude returns full file replacements
+2. Sends them to Gemini with the Step instruction
+3. Gemini returns full file replacements
 4. Tempo writes them to disk
-5. Runs validation — if it fails, sends the errors back to Claude and retries
+5. Runs validation — if it fails, sends the errors back to Gemini and retries
 6. Moves to the next Step once validation passes

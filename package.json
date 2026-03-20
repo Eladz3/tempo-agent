@@ -1,6 +1,6 @@
 {
   "name": "tempo-agent",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A modular CLI tool for AI-driven code generation and validation",
   "main": "dist/cli/index.js",
   "bin": {
@@ -18,7 +18,13 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": ["cli", "tempo", "orchestrator", "claude", "ai"],
+  "keywords": [
+    "cli",
+    "tempo",
+    "orchestrator",
+    "claude",
+    "ai"
+  ],
   "license": "MIT",
   "dependencies": {
     "axios": "^1.7.2",

@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import { SpecSchema } from '../spec/schema';
 import { runPipeline } from '../controller/runPipeline';
 import { compileIdeation } from '../ideation/compile';
+import { tuneIdeation } from '../ideation/tune';
 
 const cwd = process.cwd();
 
@@ -14,6 +15,7 @@ function printHelp(): void {
   console.log('Usage:');
   console.log('  tempo init                  Initialize .tempo/ in current directory');
   console.log('  tempo compile <file>        Compile a markdown ideation file to a score');
+  console.log('  tempo tune                  Convert rough blurbs ([r] or [rough] prefixed) into clean design specs');
   console.log('  tempo run <score-name>      Run a score from .tempo/scores/<name>.json');
   console.log('');
 }
@@ -181,6 +183,9 @@ async function main(): Promise<void> {
       break;
     case 'compile':
       cmdCompile(args);
+      break;
+    case 'tune':
+      await tuneIdeation(cwd);
       break;
     case 'run':
       await cmdRun(args);

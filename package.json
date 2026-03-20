@@ -25,6 +25,10 @@
     "claude",
     "ai"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Eladz3/tempo-agent"
+  },
   "license": "MIT",
   "dependencies": {
     "axios": "^1.7.2",

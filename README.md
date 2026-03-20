@@ -1,4 +1,4 @@
-# Tempo
+# Tempo [![npm version](https://img.shields.io/npm/v/tempo-agent.svg?style=flat-square)](https://www.npmjs.org/package/tempo-agent)
 
 AI-driven code generation CLI. Give Tempo a goal, and it writes, validates, and retries code changes step by step using Claude.
 

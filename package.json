@@ -1,6 +1,6 @@
 {
   "name": "tempo-agent",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "A modular CLI tool for AI-driven code generation and validation",
   "main": "dist/cli/index.js",
   "bin": {

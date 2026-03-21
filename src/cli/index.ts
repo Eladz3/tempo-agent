@@ -46,6 +46,30 @@ function cmdInit(): void {
     );
   }
 
+  const secretsPath = path.join(tempoDir, '.env');
+  if (!fs.existsSync(secretsPath)) {
+    fs.writeFileSync(
+      secretsPath,
+      `# Tempo secrets — do not commit this file
+# Add your API key below:
+GEMINI_API_KEY=
+`,
+      'utf-8'
+    );
+  }
+
+  // Ensure .tempo/.env is in the project's .gitignore
+  const gitignorePath = path.join(cwd, '.gitignore');
+  const gitignoreEntry = '.tempo/.env';
+  if (fs.existsSync(gitignorePath)) {
+    const existing = fs.readFileSync(gitignorePath, 'utf-8');
+    if (!existing.includes(gitignoreEntry)) {
+      fs.appendFileSync(gitignorePath, `\n${gitignoreEntry}\n`, 'utf-8');
+    }
+  } else {
+    fs.writeFileSync(gitignorePath, `${gitignoreEntry}\n`, 'utf-8');
+  }
+
   const globalContextPath = path.join(tempoDir, 'global-context.md');
   if (!fs.existsSync(globalContextPath)) {
     fs.writeFileSync(
@@ -109,13 +133,14 @@ design principles, code style rules, and safety constraints.
   }
 
   console.log(chalk.green('✓ Initialized .tempo/ directory'));
+  console.log(chalk.blue('  .tempo/.env               — API keys (gitignored)'));
   console.log(chalk.blue('  .tempo/config.json        — validation commands'));
   console.log(chalk.blue('  .tempo/global-context.md  — project rules injected into every prompt'));
   console.log(chalk.blue('  .tempo/ideation/    — place your .md ideation files here'));
   console.log(chalk.blue('  .tempo/scores/      — compiled score JSONs'));
   console.log(chalk.blue('  .tempo/sessions/    — execution history per run'));
   console.log('');
-  console.log(chalk.yellow('Tip: add .tempo/sessions/ and .tempo/runs/ to your .gitignore'));
+  console.log(chalk.yellow('Next: add your GEMINI_API_KEY to .tempo/.env'));
 }
 
 async function cmdCompile(args: string[]): Promise<void> {

@@ -118,7 +118,7 @@ design principles, code style rules, and safety constraints.
   console.log(chalk.yellow('Tip: add .tempo/sessions/ and .tempo/runs/ to your .gitignore'));
 }
 
-function cmdCompile(args: string[]): void {
+async function cmdCompile(args: string[]): Promise<void> {
   const fileName = args[0];
   if (!fileName) {
     console.error(chalk.red('Usage: tempo compile <file>'));
@@ -130,7 +130,7 @@ function cmdCompile(args: string[]): void {
     : path.join(cwd, '.tempo', 'ideation', fileName);
 
   try {
-    const outPath = compileIdeation(filePath, cwd);
+    const outPath = await compileIdeation(filePath, cwd);
     console.log(chalk.green(`✓ Score compiled → ${outPath}`));
   } catch (err) {
     console.error(chalk.red(`Error: ${(err as Error).message}`));
@@ -182,7 +182,7 @@ async function main(): Promise<void> {
       cmdInit();
       break;
     case 'compile':
-      cmdCompile(args);
+      await cmdCompile(args);
       break;
     case 'tune':
       await tuneIdeation(cwd);

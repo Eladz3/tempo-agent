@@ -1,101 +1,77 @@
 import fs from 'fs';
 import path from 'path';
-import { Spec } from '../spec/schema';
+import chalk from 'chalk';
+import { callAI } from '../executor/aiClient';
+import { Spec, SpecSchema } from '../spec/schema';
 
-interface ParsedIdeation {
-  goal: string;
-  context: string;
-  ideas: string[];
-  finalPlan: string;
-}
+const SYSTEM_PROMPT = `You are a senior software architect and project planner. Analyze a markdown ideation document and produce a structured execution score as a valid JSON object.
 
-function parseMarkdown(content: string): ParsedIdeation {
-  const sections: ParsedIdeation = {
-    goal: '',
-    context: '',
-    ideas: [],
-    finalPlan: '',
-  };
-
-  const sectionMap: Record<string, keyof ParsedIdeation> = {
-    goal: 'goal',
-    context: 'context',
-    ideas: 'ideas',
-    'final plan': 'finalPlan',
-  };
-
-  const lines = content.split('\n');
-  let currentSection: keyof ParsedIdeation | null = null;
-  const buffer: string[] = [];
-
-  function flush(): void {
-    if (!currentSection) return;
-    const text = buffer.join('\n').trim();
-    if (currentSection === 'ideas') {
-      sections.ideas = text
-        .split('\n')
-        .map((l) => l.replace(/^[-*]\s*/, '').trim())
-        .filter(Boolean);
-    } else {
-      (sections as unknown as Record<string, string>)[currentSection] = text;
+The JSON must strictly follow this schema:
+{
+  "goal": "<one concise sentence describing the overall feature objective>",
+  "constraints": ["<project constraints, rules, and technical boundaries the implementation must respect>"],
+  "steps": [
+    {
+      "id": 1,
+      "description": "<clear, actionable step description>",
+      "files_allowed": ["<file paths relative to project root that this step creates or modifies>"]
     }
-    buffer.length = 0;
-  }
-
-  for (const line of lines) {
-    const headingMatch = line.match(/^#{1,3}\s+(.+)/);
-    if (headingMatch) {
-      flush();
-      const heading = headingMatch[1].toLowerCase().trim();
-      currentSection = sectionMap[heading] ?? null;
-    } else {
-      buffer.push(line);
-    }
-  }
-  flush();
-
-  return sections;
+  ],
+  "tests": ["<specific, verifiable test case descriptions>"],
+  "definition_of_done": ["<measurable acceptance criteria that must be true when the feature is complete>"]
 }
 
-function buildSpec(parsed: ParsedIdeation, name: string): Spec {
-  const planLines = parsed.finalPlan.split('\n').filter(Boolean);
+Guidelines:
+- Break the work into sequential, granular steps — each step should be a single focused unit of work
+- Populate files_allowed with specific file paths (not directories) for each step
+- tests must be concrete and verifiable (e.g. "GET /api/users returns 200 with a list of users")
+- definition_of_done must be measurable outcomes (e.g. "All API endpoints return correct HTTP status codes")
+- constraints should capture all technical rules, style requirements, and boundaries mentioned in the ideation
+- Step IDs must be sequential integers starting from 1
 
-  const steps = planLines
-    .map((line, i) => ({
-      id: i + 1,
-      description: line.replace(/^\d+[.)]\s*/, '').trim(),
-      files_allowed: [],
-    }))
-    .filter((s) => s.description.length > 0);
+Respond ONLY with the raw JSON object. No explanations, no markdown code fences, no extra text.`;
 
-  return {
-    goal: parsed.goal || name,
-    constraints: parsed.context
-      .split('\n')
-      .map((l) => l.replace(/^[-*]\s*/, '').trim())
-      .filter(Boolean),
-    steps: steps.length > 0
-      ? steps
-      : [{ id: 1, description: parsed.finalPlan || 'Implement the plan', files_allowed: [] }],
-    tests: [],
-    definition_of_done: parsed.ideas,
-  };
-}
-
-export function compileIdeation(filePath: string, cwd: string): string {
+export async function compileIdeation(filePath: string, cwd: string): Promise<string> {
   if (!fs.existsSync(filePath)) {
     throw new Error(`File not found: ${filePath}`);
   }
 
-  const content = fs.readFileSync(filePath, 'utf-8');
+  const content = fs.readFileSync(filePath, 'utf-8').trim();
   const name = path.basename(filePath, path.extname(filePath));
-  const parsed = parseMarkdown(content);
-  const spec = buildSpec(parsed, name);
 
-  const specsDir = path.join(cwd, '.tempo', 'scores');
-  fs.mkdirSync(specsDir, { recursive: true });
+  console.log(chalk.bold(`\nCompiling: ${path.basename(filePath)}`));
 
-  const outPath = path.join(specsDir, `${name}.json`);
+  let aiResponse: string;
+  try {
+    aiResponse = await callAI(SYSTEM_PROMPT, `Here is the ideation document:\n\n${content}`);
+  } catch (err) {
+    throw new Error(`AI call failed: ${(err as Error).message}`);
+  }
+
+  // Strip markdown code fences if present (```json ... ```)
+  const jsonText = aiResponse
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```\s*$/, '')
+    .trim();
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(jsonText);
+  } catch {
+    throw new Error(`AI returned invalid JSON. Response:\n${jsonText.slice(0, 500)}`);
+  }
+
+  const parsed = SpecSchema.safeParse(raw);
+  if (!parsed.success) {
+    throw new Error(`AI response does not match score schema:\n${JSON.stringify(parsed.error.format(), null, 2)}`);
+  }
+
+  const spec: Spec = parsed.data;
+
+  const scoresDir = path.join(cwd, '.tempo', 'scores');
+  fs.mkdirSync(scoresDir, { recursive: true });
+
+  const outPath = path.join(scoresDir, `${name}.json`);
   fs.writeFileSync(outPath, JSON.stringify(spec, null, 2), 'utf-8');
 
   return outPath;

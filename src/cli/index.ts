@@ -7,6 +7,7 @@ import { SpecSchema } from '../spec/schema';
 import { runPipeline } from '../controller/runPipeline';
 import { compileIdeation } from '../ideation/compile';
 import { tuneIdeation } from '../ideation/tune';
+import { selectFromList } from '../utils/selectFromList';
 
 const cwd = process.cwd();
 
@@ -14,9 +15,9 @@ function printHelp(): void {
   console.log(chalk.bold('\nTempo — AI-driven code generation CLI\n'));
   console.log('Usage:');
   console.log('  tempo init                  Initialize .tempo/ in current directory');
-  console.log('  tempo compile <file>        Compile a markdown ideation file to a score');
+  console.log('  tempo compile [file]        Compile a markdown ideation file to a score (interactive if omitted)');
   console.log('  tempo tune                  Convert rough blurbs ([r] or [rough] prefixed) into clean design specs');
-  console.log('  tempo run <score-name>      Run a score from .tempo/scores/<name>.json');
+  console.log('  tempo run [score-name]      Run a score from .tempo/scores/<name>.json (interactive if omitted)');
   console.log('');
 }
 
@@ -144,10 +145,24 @@ design principles, code style rules, and safety constraints.
 }
 
 async function cmdCompile(args: string[]): Promise<void> {
-  const fileName = args[0];
+  let fileName = args[0];
+
   if (!fileName) {
-    console.error(chalk.red('Usage: tempo compile <file>'));
-    process.exit(1);
+    const ideationDir = path.join(cwd, '.tempo', 'ideation');
+    const files = fs.existsSync(ideationDir)
+      ? fs.readdirSync(ideationDir).filter((f) => f.endsWith('.md'))
+      : [];
+
+    if (files.length === 0) {
+      console.error(chalk.red('No ideation files found in .tempo/ideation/'));
+      process.exit(1);
+    }
+
+    const chosen = await selectFromList(files, 'Select an ideation file to compile:');
+    if (!chosen) {
+      process.exit(0);
+    }
+    fileName = chosen;
   }
 
   const filePath = path.isAbsolute(fileName)
@@ -164,10 +179,27 @@ async function cmdCompile(args: string[]): Promise<void> {
 }
 
 async function cmdRun(args: string[]): Promise<void> {
-  const scoreName = args[0];
+  let scoreName = args[0];
+
   if (!scoreName) {
-    console.error(chalk.red('Usage: tempo run <score-name>'));
-    process.exit(1);
+    const scoresDir = path.join(cwd, '.tempo', 'scores');
+    const files = fs.existsSync(scoresDir)
+      ? fs.readdirSync(scoresDir).filter((f) => f.endsWith('.json'))
+      : [];
+
+    if (files.length === 0) {
+      console.error(chalk.red('No score files found in .tempo/scores/'));
+      process.exit(1);
+    }
+
+    const chosen = await selectFromList(
+      files.map((f) => f.replace(/\.json$/, '')),
+      'Select a score to run:'
+    );
+    if (!chosen) {
+      process.exit(0);
+    }
+    scoreName = chosen;
   }
 
   const scorePath = path.join(cwd, '.tempo', 'scores', `${scoreName}.json`);

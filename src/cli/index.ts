@@ -15,6 +15,7 @@ function printHelp(): void {
   console.log(chalk.bold('\nTempo — AI-driven code generation CLI\n'));
   console.log('Usage:');
   console.log('  tempo init                  Initialize .tempo/ in current directory');
+  console.log('  tempo draft <name>          Create a new blank ideation file in .tempo/ideation/');
   console.log('  tempo compile [file]        Compile a markdown ideation file to a score (interactive if omitted)');
   console.log('  tempo tune                  Convert rough blurbs ([r] or [rough] prefixed) into clean design specs');
   console.log('  tempo run [score-name]      Run a score from .tempo/scores/<name>.json (interactive if omitted)');
@@ -144,6 +145,37 @@ design principles, code style rules, and safety constraints.
   console.log(chalk.yellow('Next: add your GEMINI_API_KEY to .tempo/.env'));
 }
 
+function cmdDraft(args: string[]): void {
+  const rawName = args[0];
+  if (!rawName) {
+    console.error(chalk.red('Usage: tempo draft <name>'));
+    process.exit(1);
+  }
+
+  const kebabName = rawName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  const fileName = `[rough] ${kebabName}.md`;
+  const ideationDir = path.join(cwd, '.tempo', 'ideation');
+
+  if (!fs.existsSync(ideationDir)) {
+    console.error(chalk.red('No .tempo/ideation/ directory found. Run `tempo init` first.'));
+    process.exit(1);
+  }
+
+  const outPath = path.join(ideationDir, fileName);
+  if (fs.existsSync(outPath)) {
+    console.error(chalk.red(`File already exists: ${outPath}`));
+    process.exit(1);
+  }
+
+  fs.writeFileSync(outPath, '', 'utf-8');
+  console.log(chalk.green(`✓ Created ${outPath}`));
+}
+
 async function cmdCompile(args: string[]): Promise<void> {
   let fileName = args[0];
 
@@ -237,6 +269,9 @@ async function main(): Promise<void> {
   switch (command) {
     case 'init':
       cmdInit();
+      break;
+    case 'draft':
+      cmdDraft(args);
       break;
     case 'compile':
       await cmdCompile(args);

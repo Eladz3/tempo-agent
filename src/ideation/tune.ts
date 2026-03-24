@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { spawn } from "child_process";
 import chalk from "chalk";
 import { callAI } from "../executor/aiClient";
 
@@ -83,6 +84,7 @@ ${blurb.replace(/-->/g, "--\u003e")}
 
     fs.writeFileSync(cleanPath, output, "utf-8");
     fs.unlinkSync(filePath);
+    spawn("code", [cleanPath], { detached: true, stdio: "ignore", shell: true }).unref();
 
     console.log(chalk.green(`  ✓ Written: ${cleanName}`));
   }

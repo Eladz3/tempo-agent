@@ -2,6 +2,7 @@
 
 import fs from "fs";
 import path from "path";
+import { spawn } from "child_process";
 import chalk from "chalk";
 import { SpecSchema } from "../spec/schema";
 import { runPipeline } from "../controller/runPipeline";
@@ -194,6 +195,7 @@ function cmdDraft(args: string[]): void {
 
   fs.writeFileSync(outPath, "", "utf-8");
   console.log(chalk.green(`✓ Created ${outPath}`));
+  spawn("code", [outPath], { detached: true, stdio: "ignore", shell: true }).unref();
 }
 
 async function cmdCompile(args: string[]): Promise<void> {

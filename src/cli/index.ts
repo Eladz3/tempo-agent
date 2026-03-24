@@ -176,7 +176,7 @@ function cmdDraft(args: string[]): void {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-  const fileName = `[rough]${kebabName}.md`;
+  const fileName = `[rough] ${kebabName}.md`;
   const ideationDir = path.join(cwd, ".tempo", "ideation");
 
   if (!fs.existsSync(ideationDir)) {

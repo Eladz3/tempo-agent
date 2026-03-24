@@ -1,10 +1,10 @@
 import fs from "fs";
 import path from "path";
-import { spawn } from "child_process";
 import chalk from "chalk";
+import execa from "execa";
 import { callAI } from "../executor/aiClient";
 
-const ROUGH_PREFIX_REGEX = /^\[(rough|r)\]/i;
+const ROUGH_PREFIX_REGEX = /^\[(rough|r)\]\s*/i;
 
 const SYSTEM_PROMPT = `You are a senior software architect. Your task is to transform a rough feature blurb into a clean, organized design specification.
 
@@ -31,6 +31,20 @@ function stripRoughPrefix(filename: string): string {
   return filename.replace(ROUGH_PREFIX_REGEX, "").trim();
 }
 
+function resolveCleanPath(ideationDir: string, cleanName: string): string {
+  const candidate = path.join(ideationDir, cleanName);
+  if (!fs.existsSync(candidate)) return candidate;
+
+  const ext = path.extname(cleanName);
+  const base = path.basename(cleanName, ext);
+  let counter = 1;
+  while (true) {
+    const named = path.join(ideationDir, `${base}-${counter}${ext}`);
+    if (!fs.existsSync(named)) return named;
+    counter++;
+  }
+}
+
 export async function tuneIdeation(cwd: string): Promise<void> {
   const ideationDir = path.join(cwd, ".tempo", "ideation");
   const roughFiles = findRoughFiles(ideationDir);
@@ -55,9 +69,9 @@ export async function tuneIdeation(cwd: string): Promise<void> {
   for (const filePath of roughFiles) {
     const originalName = path.basename(filePath);
     const cleanName = stripRoughPrefix(originalName);
-    const cleanPath = path.join(ideationDir, cleanName);
+    const cleanPath = resolveCleanPath(ideationDir, cleanName);
 
-    console.log(chalk.bold(`Tuning: ${originalName} → ${cleanName}`));
+    console.log(chalk.bold(`Tuning: ${originalName} → ${path.basename(cleanPath)}`));
 
     const blurb = fs.readFileSync(filePath, "utf-8").trim();
 
@@ -84,9 +98,10 @@ ${blurb.replace(/-->/g, "--\u003e")}
 
     fs.writeFileSync(cleanPath, output, "utf-8");
     fs.unlinkSync(filePath);
-    spawn("code", [cleanPath], { detached: true, stdio: "ignore", shell: true }).unref();
+    const codeCmd = process.platform === "win32" ? "code.cmd" : "code";
+    execa(codeCmd, [cleanPath]).unref();
 
-    console.log(chalk.green(`  ✓ Written: ${cleanName}`));
+    console.log(chalk.green(`  ✓ Written: ${path.basename(cleanPath)}`));
   }
 
   console.log("");

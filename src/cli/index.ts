@@ -2,8 +2,8 @@
 
 import fs from "fs";
 import path from "path";
-import { spawn } from "child_process";
 import chalk from "chalk";
+import execa from "execa";
 import { SpecSchema } from "../spec/schema";
 import { runPipeline } from "../controller/runPipeline";
 import { compileIdeation } from "../ideation/compile";
@@ -177,7 +177,7 @@ function cmdDraft(args: string[]): void {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-  const fileName = `[rough] ${kebabName}.md`;
+  const fileName = `[rough]${kebabName}.md`;
   const ideationDir = path.join(cwd, ".tempo", "ideation");
 
   if (!fs.existsSync(ideationDir)) {
@@ -195,7 +195,8 @@ function cmdDraft(args: string[]): void {
 
   fs.writeFileSync(outPath, "", "utf-8");
   console.log(chalk.green(`✓ Created ${outPath}`));
-  spawn("code", [outPath], { detached: true, stdio: "ignore", shell: true }).unref();
+  const codeCmd = process.platform === "win32" ? "code.cmd" : "code";
+  execa(codeCmd, [outPath]).unref();
 }
 
 async function cmdCompile(args: string[]): Promise<void> {
